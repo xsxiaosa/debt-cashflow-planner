@@ -1,7 +1,8 @@
 /* App主组件 - 债务现金流规划器 */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DebtChart from './components/DebtChart';
+import DebtManagerModal, { DebtItem } from './components/DebtManagerModal';
 import './App.css';
 
 /* API基础URL */
@@ -48,6 +49,13 @@ interface DebtPlanResponse {
   monthlyIncome: number;
   currentCash: number;
   initialDebtSummary: InitialDebtSummary;
+}
+
+/* 通用接口响应 */
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
 }
 
 
@@ -167,9 +175,15 @@ const App: React.FC = () => {
   const [income, setIncome] = useState<number>(22000);
   const [cash, setCash] = useState<number>(30000);
   const [planMonths, setPlanMonths] = useState<number>(12);
+  const [isDebtModalOpen, setIsDebtModalOpen] = useState<boolean>(false);
+  const [debts, setDebts] = useState<DebtItem[]>([]);
+  const [debtsLoading, setDebtsLoading] = useState<boolean>(false);
+  const [debtsSaving, setDebtsSaving] = useState<boolean>(false);
+  const [debtError, setDebtError] = useState<string | null>(null);
+  const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   /* 获取债务计划数据 */
-  const fetchDebtPlan = async () => {
+  const fetchDebtPlan = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -195,16 +209,98 @@ const App: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }, [income, cash, planMonths]);
+
+  /* 获取原始债务列表 */
+  const fetchDebts = async (): Promise<DebtItem[]> => {
+    setDebtsLoading(true);
+    setDebtError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/debts`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: ApiResponse<DebtItem[]> = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || '获取债务列表失败');
+      }
+
+      setDebts(result.data);
+      return result.data;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '未知错误';
+      setDebtError(message);
+      throw err;
+    } finally {
+      setDebtsLoading(false);
+    }
   };
 
   // 初始加载
   useEffect(() => {
     fetchDebtPlan();
-  }, []);
+  }, [fetchDebtPlan]);
+
+  useEffect(() => {
+    if (!saveSuccessMessage) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setSaveSuccessMessage(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [saveSuccessMessage]);
 
   /* 处理重新计算 */
   const handleRecalculate = () => {
     fetchDebtPlan();
+  };
+
+  /* 打开债务编辑弹窗 */
+  const handleOpenDebtModal = async () => {
+    setIsDebtModalOpen(true);
+    setSaveSuccessMessage(null);
+    try {
+      await fetchDebts();
+    } catch (err) {
+      console.error('获取债务列表失败:', err);
+    }
+  };
+
+  /* 保存债务列表并刷新计划结果 */
+  const handleSaveDebts = async (updatedDebts: DebtItem[]) => {
+    setDebtsSaving(true);
+    setDebtError(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/debts`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ debts: updatedDebts })
+      });
+
+      const result: ApiResponse<DebtItem[]> = await response.json();
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || '保存债务数据失败');
+      }
+
+      setDebts(result.data);
+      await fetchDebtPlan();
+      setIsDebtModalOpen(false);
+      setSaveSuccessMessage(`负债列表已保存，共 ${result.data.length} 条债务，主页面数据已刷新。`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '未知错误';
+      setDebtError(message);
+      throw err;
+    } finally {
+      setDebtsSaving(false);
+    }
   };
 
   /* 格式化货币 */
@@ -228,7 +324,21 @@ const App: React.FC = () => {
       <main className="App-main">
         {/* 参数设置面板 */}
         <div className="params-panel">
-          <h3>参数设置</h3>
+          <div className="panel-header">
+            <h3>参数设置</h3>
+            <button
+              className="manage-debts-btn"
+              onClick={handleOpenDebtModal}
+              disabled={debtsLoading || debtsSaving}
+            >
+              {debtsLoading ? '加载负债中...' : '编辑负债列表'}
+            </button>
+          </div>
+          {saveSuccessMessage && (
+            <div className="save-success-banner">
+              {saveSuccessMessage}
+            </div>
+          )}
           <div className="params-form">
             <div className="form-group">
               <label htmlFor="income">月收入（元）：</label>
@@ -441,6 +551,19 @@ const App: React.FC = () => {
           </>
         )}
       </main>
+
+      <DebtManagerModal
+        isOpen={isDebtModalOpen}
+        debts={debts}
+        loading={debtsLoading}
+        saving={debtsSaving}
+        errorMessage={debtError}
+        onClose={() => {
+          setDebtError(null);
+          setIsDebtModalOpen(false);
+        }}
+        onSave={handleSaveDebts}
+      />
     </div>
   );
 };

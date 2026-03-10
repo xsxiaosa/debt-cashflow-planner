@@ -8,7 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { calculate12MonthPlan } = require('./debtService');
-const { getDebts } = require('./debtRepository');
+const { getDebts, saveDebts, isValidDebtList } = require('./debtRepository');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,10 +28,46 @@ function loadDebtData() {
 }
 
 /**
- * @summary 后续可在此扩展债务管理接口
- * @description 例如 POST /api/debts、PUT /api/debts/:id、DELETE /api/debts/:id，
- * 统一复用 debtRepository 中的读写能力
+ * @summary 标准化单条债务数据
+ * @param {Object} debt - 原始债务对象
+ * @returns {Object} 标准化后的债务对象
  */
+function normalizeDebtItem(debt) {
+  return {
+    category: String(debt.category || '').trim(),
+    totalAmount: Number(debt.totalAmount),
+    remainingPeriods: Number(debt.remainingPeriods),
+    monthlyPayment: Number(debt.monthlyPayment),
+    nextRepaymentMonth: debt.nextRepaymentMonth ? String(debt.nextRepaymentMonth).trim() : undefined
+  };
+}
+
+/**
+ * @summary 标准化债务数组
+ * @param {Array} debts - 原始债务数组
+ * @returns {Array} 标准化后的债务数组
+ */
+function normalizeDebtList(debts) {
+  return debts.map(normalizeDebtItem);
+}
+
+/**
+ * @summary 检查债务类别是否重复
+ * @param {Array} debts - 债务数组
+ * @returns {boolean} 是否存在重复类别
+ */
+function hasDuplicateCategories(debts) {
+  const categorySet = new Set();
+
+  for (const debt of debts) {
+    if (categorySet.has(debt.category)) {
+      return true;
+    }
+    categorySet.add(debt.category);
+  }
+
+  return false;
+}
 
 /// <summary>
 /// 获取债务还款计划 API
@@ -82,6 +118,116 @@ app.get('/api/debts', (req, res) => {
   }
 });
 
+/**
+ * @summary 覆盖保存债务列表
+ * @description 供前端弹窗一次性保存全部债务数据
+ */
+app.put('/api/debts', (req, res) => {
+  try {
+    const payloadDebts = req.body?.debts;
+
+    if (!Array.isArray(payloadDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '请求体必须包含 debts 数组'
+      });
+    }
+
+    const normalizedDebts = normalizeDebtList(payloadDebts);
+
+    if (!isValidDebtList(normalizedDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '债务数据格式不合法'
+      });
+    }
+
+    if (hasDuplicateCategories(normalizedDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '债务类别不能重复'
+      });
+    }
+
+    const savedDebts = saveDebts(normalizedDebts);
+    return res.json({
+      success: true,
+      data: savedDebts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @summary 导入债务列表
+ * @description 支持覆盖或追加模式，便于后续扩展批量导入能力
+ */
+app.post('/api/debts/import', (req, res) => {
+  try {
+    const payloadDebts = req.body?.debts;
+    const mode = req.body?.mode === 'append' ? 'append' : 'replace';
+
+    if (!Array.isArray(payloadDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '请求体必须包含 debts 数组'
+      });
+    }
+
+    const normalizedDebts = normalizeDebtList(payloadDebts);
+    if (!isValidDebtList(normalizedDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '导入的债务数据格式不合法'
+      });
+    }
+
+    const mergedDebts = mode === 'append'
+      ? [...loadDebtData(), ...normalizedDebts]
+      : normalizedDebts;
+
+    if (hasDuplicateCategories(mergedDebts)) {
+      return res.status(400).json({
+        success: false,
+        error: '导入后存在重复的债务类别'
+      });
+    }
+
+    const savedDebts = saveDebts(mergedDebts);
+    return res.json({
+      success: true,
+      data: savedDebts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @summary 导出债务列表
+ * @description 返回 JSON 文件下载
+ */
+app.get('/api/debts/export', (req, res) => {
+  try {
+    const debts = loadDebtData();
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="debts-export.json"');
+    return res.status(200).send(`${JSON.stringify(debts, null, 2)}\n`);
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 /// <summary>
 /// 健康检查
 /// </summary>
@@ -112,5 +258,8 @@ app.listen(PORT, () => {
   console.log(`API端点:`);
   console.log(`  - GET /api/debt-plan    获取还款计划(支持months=12|18|24)`);
   console.log(`  - GET /api/debts        获取债务列表`);
+  console.log(`  - PUT /api/debts        覆盖保存债务列表`);
+  console.log(`  - POST /api/debts/import 导入债务列表`);
+  console.log(`  - GET /api/debts/export 导出债务列表`);
   console.log(`  - GET /api/health       健康检查`);
 });

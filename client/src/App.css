@@ -575,6 +575,47 @@
   letter-spacing: 0.01em;
 }
 
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.manage-debts-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: var(--primary-strong);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.manage-debts-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(79, 70, 229, 0.18);
+  background: #e0e7ff;
+}
+
+.manage-debts-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.save-success-banner {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(21, 128, 61, 0.2);
+  border-radius: 12px;
+  background: #ecfdf3;
+  color: var(--success);
+  font-weight: 600;
+}
+
 .params-form {
   gap: 16px;
 }
@@ -813,6 +854,376 @@
   padding-left: 20px;
 }
 
+/* 债务管理弹窗 */
+.debt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.debt-modal {
+  width: min(1280px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 20px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.28);
+}
+
+.debt-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.debt-modal-header h2 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.debt-modal-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.modal-close-btn,
+.toolbar-btn,
+.table-action-btn {
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modal-close-btn {
+  min-width: 88px;
+  min-height: 40px;
+  padding: 0 16px;
+  background: #f1f5f9;
+  color: var(--text-secondary);
+}
+
+.debt-modal-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 28px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0 16px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.toolbar-btn.primary {
+  background: linear-gradient(135deg, var(--primary) 0%, #6366f1 55%, #0ea5e9 100%);
+  color: #ffffff;
+}
+
+.toolbar-btn.secondary {
+  background: #f8fafc;
+  color: var(--text-secondary);
+  border: 1px solid #dbe4f0;
+}
+
+.toolbar-btn:disabled,
+.modal-close-btn:disabled,
+.table-action-btn:disabled,
+.toolbar-btn.secondary.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.secondary input {
+  display: none;
+}
+
+.file-import-btn {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.file-import-btn.disabled {
+  pointer-events: none;
+}
+
+.toolbar-summary {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.debt-modal-error {
+  margin: 16px 28px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  font-weight: 600;
+}
+
+.paste-import-panel {
+  margin: 16px 28px 0;
+  padding: 18px;
+  border: 1px solid #dbe4f0;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.paste-import-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.paste-import-header h3 {
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.paste-import-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.paste-import-textarea {
+  width: 100%;
+  min-height: 220px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: var(--text-primary);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.paste-import-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.import-preview-panel {
+  margin: 16px 28px 0;
+  padding: 18px;
+  border: 1px solid #c7d2fe;
+  border-radius: 16px;
+  background: #f8faff;
+}
+
+.import-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.import-preview-header h3 {
+  margin: 0 0 6px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.import-preview-header p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.import-preview-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.import-preview-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.preview-stat {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.preview-stat.added {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.preview-stat.updated {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.preview-stat.removed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.preview-stat.unchanged {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.import-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.preview-list {
+  padding: 14px;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.preview-list h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.preview-list p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.debt-modal-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.95fr);
+  gap: 20px;
+  padding: 20px 28px 28px;
+  overflow: auto;
+}
+
+.debt-table-panel,
+.debt-form-panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.debt-table-panel {
+  overflow: auto;
+}
+
+.debt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.debt-table th,
+.debt-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.debt-table th {
+  position: sticky;
+  top: 0;
+  background: #eef2ff;
+  color: var(--text-primary);
+  z-index: 1;
+}
+
+.debt-table td {
+  color: var(--text-secondary);
+}
+
+.debt-table-empty {
+  text-align: center !important;
+  color: var(--text-muted) !important;
+  padding: 36px 16px !important;
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.table-action-btn {
+  min-height: 32px;
+  padding: 0 12px;
+  background: #e0e7ff;
+  color: var(--primary-strong);
+}
+
+.table-action-btn.danger {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.debt-form-panel {
+  padding: 20px;
+}
+
+.debt-form-panel h3 {
+  margin: 0 0 16px 0;
+  color: var(--text-primary);
+}
+
+.debt-form {
+  display: grid;
+  gap: 14px;
+}
+
+.debt-form .form-group {
+  min-width: auto;
+}
+
+.debt-form .form-group input {
+  width: 100%;
+}
+
+.debt-modal-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
 @media (max-width: 768px) {
   :root {
     --card-min-width: 100%;
@@ -833,6 +1244,11 @@
     border-radius: 14px;
   }
 
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .form-group {
     min-width: 100%;
   }
@@ -844,6 +1260,52 @@
 
   .debt-chart-section {
     padding: 0;
+  }
+
+  .debt-modal-overlay {
+    padding: 12px;
+  }
+
+  .debt-modal {
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+
+  .debt-modal-header,
+  .debt-modal-toolbar,
+  .debt-modal-content {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .debt-modal-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .import-preview-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .paste-import-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .import-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .debt-modal-content {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-bottom: 20px;
+  }
+
+  .debt-table th,
+  .debt-table td {
+    padding: 12px;
   }
 }
 
