@@ -15,6 +15,20 @@
 - 支持导出可复制的 Markdown 文本版本，便于粘贴到 Notion、Excel 或文档
 - 支持 Docker 构建与部署
 
+## 页面预览
+
+### 首屏总览
+
+![债务现金流规划器首页总览](docs/screenshots/dashboard-overview.png)
+
+### 还款计划图表
+
+![债务现金流规划器图表区域](docs/screenshots/repayment-chart.png)
+
+### 明细与计划表
+
+![债务现金流规划器明细区域](docs/screenshots/plan-details.png)
+
 ## 技术栈
 
 - 前端：React、TypeScript、Recharts
@@ -27,6 +41,8 @@
 ```text
 .
 ├─ client/                 # React 前端
+├─ docs/
+│  └─ screenshots/         # README 页面截图
 ├─ server/                 # Express 后端
 │  └─ data/
 │     ├─ debts.json        # 示例债务数据
