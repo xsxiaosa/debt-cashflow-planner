@@ -1,0 +1,9 @@
+[
+  {
+    "category": "信用卡分期",
+    "totalAmount": 5000,
+    "remainingPeriods": 12,
+    "monthlyPayment": 300,
+    "nextRepaymentMonth": "2026-04"
+  }
+]

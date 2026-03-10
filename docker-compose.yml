@@ -1,0 +1,12 @@
+services:
+  debt-cashflow-planner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: debt-cashflow-planner
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    restart: unless-stopped

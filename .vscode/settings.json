@@ -1,0 +1,10 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "/server/data/debts.json"
+      ],
+      "url": "./server/data/debts.schema.json"
+    }
+  ]
+}

@@ -1,0 +1,859 @@
+/* App样式 */
+
+.App {
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.App-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.App-main {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 30px 24px;
+}
+
+/* 参数面板 */
+.params-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.params-panel h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.params-form {
+  display: flex;
+  gap: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  width: 180px;
+  background-color: #fff;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.recalculate-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.recalculate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.recalculate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 加载状态 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 错误状态 */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.error-container button {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* 汇总信息 */
+.summary-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.summary-card.total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.summary-card h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.summary-card .amount {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* 明细表 */
+.detail-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.detail-section h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.detail-table-container {
+  overflow-x: auto;
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.detail-table th,
+.detail-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.detail-table td {
+  font-size: 14px;
+  color: #666;
+}
+
+.detail-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.amount-cell {
+  font-weight: 600;
+  color: #1976d2;
+}
+
+.positive {
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.negative {
+  color: #f44336;
+  font-weight: 600;
+}
+
+/* 宽屏优化 */
+@media (min-width: 1600px) {
+  .App-main {
+    max-width: 1760px;
+    padding: 36px 32px;
+  }
+
+  .params-form {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+
+  .summary-section {
+    grid-template-columns: repeat(5, minmax(220px, 1fr));
+    gap: 24px;
+  }
+
+  .detail-section {
+    padding: 28px;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 16px 18px;
+  }
+
+  .debt-detail-table {
+    min-width: 1300px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .App-main {
+    max-width: 1880px;
+  }
+
+  .debt-detail-table {
+    min-width: 1450px;
+  }
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .App-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .params-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .form-group input,
+  .form-group select {
+    width: 100%;
+  }
+  
+  .recalculate-btn {
+    width: 100%;
+  }
+}
+
+/* 可复制文本版本样式 */
+.text-version-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.text-version-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.copy-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
+
+.text-version-content {
+  background: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.text-version-content pre {
+  margin: 0;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+
+/* 时间范围横幅 */
+.time-range-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 24px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.time-range-banner p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.time-range-banner strong {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* 月份单元格 */
+.month-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+/* 债务详情表容器 */
+.debt-detail-table-container {
+  overflow-x: auto;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.debt-detail-table {
+  font-size: 12px;
+  min-width: 1000px;
+}
+
+.debt-detail-table th,
+.debt-detail-table td {
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.debt-detail-table .category-cell {
+  font-weight: 600;
+  text-align: left;
+  min-width: 100px;
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 10;
+}
+
+.debt-detail-table .amount-cell {
+  min-width: 80px;
+  position: sticky;
+  left: 100px;
+  background: white;
+  z-index: 10;
+}
+
+.debt-detail-table th {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: #f8f9fa;
+}
+
+.payment-cell {
+  min-width: 60px;
+}
+
+.payment-amount {
+  font-weight: 600;
+  color: #333;
+}
+
+.remaining-label {
+  font-size: 10px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.payment-cell.paid-off {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.payment-cell.finished {
+  background-color: #f5f5f5;
+  color: #999;
+}
+
+.done-label {
+  font-size: 14px;
+  color: #4caf50;
+}
+
+/* 图例 */
+.legend {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  gap: 24px;
+}
+
+.legend p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-item {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.legend-item.paid-off {
+  background-color: #e8f5e9;
+  border: 1px solid #4caf50;
+}
+
+.legend-item.finished {
+  background-color: #f5f5f5;
+  border: 1px solid #ccc;
+}
+
+/* 现代化风格覆写 */
+:root {
+  --card-min-width: 240px;
+  --bg: #f3f7ff;
+  --surface: rgba(255, 255, 255, 0.82);
+  --surface-strong: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border: rgba(148, 163, 184, 0.35);
+  --primary: #4f46e5;
+  --primary-strong: #4338ca;
+  --success: #15803d;
+  --danger: #dc2626;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+  --shadow-focus: 0 0 0 4px rgba(79, 70, 229, 0.2);
+}
+
+.App {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(79, 70, 229, 0.2) 0, rgba(79, 70, 229, 0) 35%),
+    radial-gradient(circle at 90% 10%, rgba(14, 165, 233, 0.2) 0, rgba(14, 165, 233, 0) 30%),
+    var(--bg);
+  color: var(--text-primary);
+}
+
+.App-header {
+  max-width: 1440px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #312e81 0%, #4338ca 48%, #0f766e 100%);
+  border-radius: 0 0 24px 24px;
+  padding: 48px 24px 42px;
+  box-shadow: 0 18px 35px rgba(30, 41, 59, 0.22);
+}
+
+.App-header h1 {
+  letter-spacing: 0.02em;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+.App-header p {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.App-main {
+  padding: 28px 24px 40px;
+}
+
+.params-panel,
+.detail-section,
+.summary-card,
+.loading-container,
+.error-container {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+}
+
+.params-panel h3,
+.detail-section h3 {
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.params-form {
+  gap: 16px;
+}
+
+.form-group {
+  min-width: 200px;
+}
+
+.form-group label {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: var(--text-primary);
+  min-height: 44px;
+  width: 220px;
+  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.03);
+}
+
+.form-group input:hover,
+.form-group select:hover {
+  border-color: #94a3b8;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.recalculate-btn,
+.copy-btn,
+.error-container button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.recalculate-btn,
+.copy-btn {
+  background: linear-gradient(135deg, var(--primary) 0%, #6366f1 55%, #0ea5e9 100%);
+  transition: box-shadow 220ms ease, transform 220ms ease, opacity 220ms ease;
+}
+
+.recalculate-btn:hover:not(:disabled),
+.copy-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.28);
+}
+
+.recalculate-btn:focus-visible,
+.copy-btn:focus-visible,
+.error-container button:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.error-container {
+  border: 1px solid rgba(248, 113, 113, 0.4);
+}
+
+.error-message {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.error-container button {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+}
+
+.summary-section {
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min-width), 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  text-align: left;
+}
+
+.summary-card h4 {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.summary-card .amount {
+  color: var(--text-primary);
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+}
+
+.summary-card.total {
+  background: linear-gradient(140deg, #312e81 0%, #4338ca 45%, #0f766e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.summary-card.total h4,
+.summary-card.total .amount {
+  color: #f8fafc;
+}
+
+.time-range-banner {
+  background: linear-gradient(135deg, #1e1b4b 0%, #3730a3 58%, #115e59 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 10px 24px rgba(30, 41, 59, 0.2);
+}
+
+.time-range-banner p {
+  font-size: 1rem;
+}
+
+.detail-table th {
+  background: #eef2ff;
+  color: #1e293b;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.detail-table td {
+  color: var(--text-secondary);
+}
+
+.detail-table tr:hover {
+  background: #f8faff;
+}
+
+.amount-cell {
+  color: var(--primary);
+}
+
+.positive {
+  color: var(--success);
+}
+
+.negative {
+  color: var(--danger);
+}
+
+.text-version-content {
+  background: #f8fafc;
+  border: 1px solid #dbe4f0;
+}
+
+.text-version-content pre {
+  color: #1e293b;
+  line-height: 1.7;
+}
+
+.legend {
+  background: #f8fafc;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+}
+
+.legend p {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* 图表区域 */
+.debt-chart-section {
+  width: 100%;
+  padding: 0;
+}
+
+.chart-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--card-min-width), 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.chart-stat-card {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.chart-stat-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.chart-stat-value {
+  margin: 0 0 4px 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.chart-stat-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chart-panel {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--shadow-soft);
+}
+
+.chart-panel-title {
+  margin: 0 0 20px 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.chart-note {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #dbe4f0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.chart-note-title {
+  margin: 0 0 8px 0;
+}
+
+.chart-note ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --card-min-width: 100%;
+  }
+
+  .App-header {
+    border-radius: 0 0 18px 18px;
+    padding: 36px 16px 30px;
+  }
+
+  .App-main {
+    padding: 20px 14px 30px;
+  }
+
+  .params-panel,
+  .detail-section {
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .form-group {
+    min-width: 100%;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+  }
+
+  .debt-chart-section {
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recalculate-btn,
+  .copy-btn,
+  .detail-table tr,
+  .summary-card,
+  .loading-spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+}

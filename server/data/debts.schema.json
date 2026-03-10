@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "债务列表数据结构",
+  "description": "用于约束 debts.json 中每条债务记录的字段格式",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "category",
+      "totalAmount",
+      "remainingPeriods",
+      "monthlyPayment"
+    ],
+    "properties": {
+      "category": {
+        "type": "string",
+        "minLength": 1,
+        "description": "债务类别名称"
+      },
+      "totalAmount": {
+        "type": "number",
+        "minimum": 0,
+        "description": "债务总金额"
+      },
+      "remainingPeriods": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "剩余还款期数"
+      },
+      "monthlyPayment": {
+        "type": "number",
+        "minimum": 0,
+        "description": "每期还款金额"
+      },
+      "nextRepaymentMonth": {
+        "type": "string",
+        "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+        "description": "下次开始还款月份，格式为 YYYY-MM"
+      }
+    }
+  }
+}

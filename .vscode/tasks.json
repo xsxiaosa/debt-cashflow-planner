@@ -1,0 +1,96 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Docker: 打包镜像 (WSL)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-24.04",
+        "--",
+        "sh",
+        "-lc",
+        "cd \"$(wslpath \"$1\")\" && docker build -t debt-cashflow-planner:latest .",
+        "sh",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: 运行容器 (WSL)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-24.04",
+        "--",
+        "sh",
+        "-lc",
+        "docker run --rm -p 3001:3001 debt-cashflow-planner:latest"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Compose: 启动服务 (WSL)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-24.04",
+        "--",
+        "sh",
+        "-lc",
+        "cd \"$(wslpath \"$1\")\" && docker-compose up --build -d",
+        "sh",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Compose: 重建并启动 (WSL, 修复 ContainerConfig)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-24.04",
+        "--",
+        "sh",
+        "-lc",
+        "cd \"$(wslpath \"$1\")\" && docker-compose down --remove-orphans && docker-compose up --build -d",
+        "sh",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Compose: 停止服务 (WSL)",
+      "type": "shell",
+      "command": "wsl",
+      "args": [
+        "-d",
+        "ubuntu-24.04",
+        "--",
+        "sh",
+        "-lc",
+        "cd \"$(wslpath \"$1\")\" && docker-compose down --remove-orphans",
+        "sh",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: 打包并运行 (WSL)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Docker: 打包镜像 (WSL)",
+        "Docker: 运行容器 (WSL)"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
