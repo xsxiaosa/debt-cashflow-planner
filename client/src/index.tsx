@@ -6,6 +6,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { registerServiceWorker } from './serviceWorkerRegistration';
 
 /// <summary>
 /// 创建React根节点并渲染应用
@@ -19,3 +20,5 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+registerServiceWorker();

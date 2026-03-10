@@ -583,6 +583,12 @@
   margin-bottom: 20px;
 }
 
+.panel-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .manage-debts-btn {
   min-height: 44px;
   padding: 0 18px;
@@ -604,6 +610,36 @@
 .manage-debts-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.ghost-action-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--text-secondary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.ghost-action-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #94a3b8;
+  box-shadow: 0 10px 18px rgba(148, 163, 184, 0.18);
+}
+
+.ghost-action-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.local-storage-note {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .save-success-banner {

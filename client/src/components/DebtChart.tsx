@@ -12,31 +12,11 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-
-/* 债务明细类型 */
-interface DebtDetail {
-  category: string;
-  originalTotal: number;
-  payment: number;
-  remainingPeriodsBefore: number;
-  remainingPeriodsAfter: number;
-  monthlyPayment: number;
-}
+import { MonthlyPlan } from '../types/debt';
 
 /* DebtChart组件属性 */
 interface DebtChartProps {
-  monthlyPlans: Array<{
-    monthIndex: number;
-    month: string;
-    year: number;
-    monthNum: number;
-    totalRepayment: number;
-    surplus: number;
-    cumulativeCash: number;
-    paidOffCount: number;
-    activeDebtCount: number;
-    debts: DebtDetail[];
-  }>;
+  monthlyPlans: MonthlyPlan[];
   monthlyIncome: number;
   currentCash: number;
   startMonth: string;
@@ -90,8 +70,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         </p>
         
         {data.debts
-          .filter((debt: DebtDetail) => debt.payment > 0)
-          .map((debt: DebtDetail, index: number) => (
+          .filter((debt: MonthlyPlan['debts'][number]) => debt.payment > 0)
+          .map((debt: MonthlyPlan['debts'][number], index: number) => (
             <p key={index} style={{ margin: '2px 0', fontSize: '11px', color: '#666' }}>
               {debt.category}: {debt.payment.toFixed(2)}
               <span style={{ 

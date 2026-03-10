@@ -1,12 +1,5 @@
 import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-
-export interface DebtItem {
-  category: string;
-  totalAmount: number;
-  remainingPeriods: number;
-  monthlyPayment: number;
-  nextRepaymentMonth?: string;
-}
+import { DebtItem } from '../types/debt';
 
 interface DebtManagerModalProps {
   isOpen: boolean;
