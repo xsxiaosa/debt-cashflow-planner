@@ -1,23 +1,20 @@
-FROM node:20-alpine AS client-builder
-WORKDIR /app/client
+FROM node:20-alpine AS frontend-builder
+WORKDIR /app
 
-COPY client/package*.json ./
-RUN npm install --no-audit --no-fund
+COPY package*.json ./
+RUN npm ci --no-audit --no-fund
 
-COPY client/ ./
+COPY . ./
 RUN npm run build
 
 FROM node:20-alpine AS runtime
-WORKDIR /app/server
+WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
 
-COPY server/package*.json ./
-RUN npm install --omit=dev --no-audit --no-fund
-
-COPY server/ ./
-COPY --from=client-builder /app/client/build ./public
+RUN npm install -g serve --no-audit --no-fund
+COPY --from=frontend-builder /app/build ./build
 
 EXPOSE 3001
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "serve -s build -l ${PORT:-3001}"]

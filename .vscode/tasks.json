@@ -41,7 +41,7 @@
         "--",
         "sh",
         "-lc",
-        "cd \"$(wslpath \"$1\")\" && docker-compose up --build -d",
+        "cd \"$(wslpath \"$1\")\" && docker compose up --build -d",
         "sh",
         "${workspaceFolder}"
       ],
@@ -61,7 +61,7 @@
         "--",
         "sh",
         "-lc",
-        "cd \"$(wslpath \"$1\")\" && docker-compose down --remove-orphans && docker-compose up --build -d",
+        "cd \"$(wslpath \"$1\")\" && docker compose down --remove-orphans && docker compose up --build -d",
         "sh",
         "${workspaceFolder}"
       ],
@@ -77,7 +77,7 @@
         "--",
         "sh",
         "-lc",
-        "cd \"$(wslpath \"$1\")\" && docker-compose down --remove-orphans",
+        "cd \"$(wslpath \"$1\")\" && docker compose down --remove-orphans",
         "sh",
         "${workspaceFolder}"
       ],

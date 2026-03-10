@@ -1,6 +1,5 @@
-client/node_modules
-server/node_modules
-client/build
+node_modules
+build
 .git
 .gitignore
 npm-debug.log

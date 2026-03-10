@@ -50,15 +50,13 @@
 
 ```text
 .
-├─ client/                 # React 前端
+├─ public/                 # 静态资源与 PWA 配置
+├─ src/                    # React 前端源码
 ├─ docs/
 │  └─ screenshots/         # README 页面截图
-├─ server/                 # 旧版后端代码（现已不再作为运行依赖）
-│  └─ data/
-│     ├─ debts.json        # 初始示例债务数据来源
-│     └─ debts.schema.json # 债务数据结构约束
 ├─ Dockerfile
 ├─ docker-compose.yml
+├─ package.json
 └─ README.md
 ```
 
@@ -67,14 +65,12 @@
 ### 1. 安装依赖
 
 ```bash
-cd client
 npm install
 ```
 
 ### 2. 启动前端开发环境
 
 ```bash
-cd client
 npm start
 ```
 
@@ -83,11 +79,10 @@ npm start
 ## 构建生产版本
 
 ```bash
-cd client
 npm run build
 ```
 
-构建产物会输出到 `client/build`，可直接作为静态站点部署。
+构建产物会输出到 `build`，可直接作为静态站点部署。
 
 ## 数据存储说明
 
@@ -124,15 +119,15 @@ npm run build
 
 ## GitHub Pages 部署
 
-当前 `client/package.json` 已设置 `"homepage": "."`，构建产物会优先使用相对路径，便于部署到仓库子路径。
+当前根目录 `package.json` 已设置 `"homepage": "."`，构建产物会优先使用相对路径，便于部署到仓库子路径。
 
 ### 手动发布
 
 一种简单做法：
 
 1. 在仓库中提交代码
-2. 进入 `client` 目录执行 `npm run build`
-3. 将 `client/build` 目录内容发布到 GitHub Pages
+2. 在仓库根目录执行 `npm run build`
+3. 将 `build` 目录内容发布到 GitHub Pages
 
 ### GitHub Actions 自动发布
 
@@ -144,6 +139,7 @@ npm run build
 
 - 推送到 `main` 分支时自动构建并发布
 - 也支持在 GitHub Actions 页面手动触发
+- 工作流会直接在仓库根目录安装依赖并构建 `build`
 
 首次启用时，请在 GitHub 仓库设置中确认：
 
