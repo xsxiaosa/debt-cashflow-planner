@@ -1,28 +1,26 @@
-/* App主组件 - 债务现金流规划器 */
-
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import DebtChart from './components/DebtChart';
 import DebtManagerModal from './components/DebtManagerModal';
-import { DebtItem, DebtPlanResponse } from './types/debt';
+import type { DebtItem, DebtPlanResponse } from './types/debt';
 import { calculateDebtPlan } from './utils/debtPlan';
 import {
   hasStoredDebts,
   loadDebtsFromStorage,
   resetDebtsToDefault,
-  saveDebtsToStorage
+  saveDebtsToStorage,
 } from './utils/debtStorage';
 import './App.css';
 
-/* 可复制文本版本组件属性 */
+/** 可复制文本版本组件属性 */
 interface TextVersionProps {
   planData: DebtPlanResponse;
 }
 
-/* 可复制文本版本组件 */
-const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
+/** 可复制文本版本组件 */
+function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
   const [copied, setCopied] = useState(false);
 
-  /* 生成Markdown格式的债务计划文本 */
+  /** 生成Markdown格式的债务计划文本 */
   const generateText = (): string => {
     const lines: string[] = [];
 
@@ -35,11 +33,30 @@ const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
     lines.push('');
     lines.push('| 项目 | 数值 |');
     lines.push('|------|------|');
-    lines.push(`| 总债务金额 | ¥${planData.initialDebtSummary.totalDebtAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} |`);
+    lines.push(
+      `| 总债务金额 | ¥${planData.initialDebtSummary.totalDebtAmount.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
     lines.push(`| 债务笔数 | ${planData.initialDebtSummary.totalDebts} 笔 |`);
-    lines.push(`| ${planData.planMonths}个月总还款 | ¥${planData.annualTotalRepayment.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} |`);
-    lines.push(`| 月收入 | ¥${planData.monthlyIncome.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} |`);
-    lines.push(`| 现有现金 | ¥${planData.currentCash.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} |`);
+    lines.push(
+      `| ${planData.planMonths}个月总还款 | ¥${planData.annualTotalRepayment.toLocaleString(
+        'zh-CN',
+        {
+          minimumFractionDigits: 2,
+        }
+      )} |`
+    );
+    lines.push(
+      `| 月收入 | ¥${planData.monthlyIncome.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
+    lines.push(
+      `| 现有现金 | ¥${planData.currentCash.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
     lines.push('');
 
     lines.push('## 月度还款明细');
@@ -47,34 +64,49 @@ const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
     lines.push('| 月份 | 还款总额 | 剩余可支配收入 | 还款笔数 | 本月还清 |');
     lines.push('|------|----------|----------------|----------|----------|');
     planData.monthlyPlans.forEach((plan) => {
-      const surplusStr = plan.surplus >= 0
-        ? `¥${plan.surplus.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
-        : `-¥${Math.abs(plan.surplus).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+      const surplusStr =
+        plan.surplus >= 0
+          ? `¥${plan.surplus.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`
+          : `-¥${Math.abs(plan.surplus).toLocaleString('zh-CN', {
+              minimumFractionDigits: 2,
+            })}`;
       const paidOffStr = plan.paidOffCount > 0 ? `+${plan.paidOffCount}笔` : '-';
-      lines.push(`| ${plan.month} | ¥${plan.totalRepayment.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} | ${surplusStr} | ${plan.activeDebtCount} 笔 | ${paidOffStr} |`);
+      lines.push(
+        `| ${plan.month} | ¥${plan.totalRepayment.toLocaleString('zh-CN', {
+          minimumFractionDigits: 2,
+        })} | ${surplusStr} | ${plan.activeDebtCount} 笔 | ${paidOffStr} |`
+      );
     });
     lines.push('');
 
     lines.push(`## 各债务还款详情 (${planData.startMonth} ~ ${planData.endMonth})`);
     lines.push('');
 
-    const monthHeaders = planData.monthlyPlans.map((plan) => `${plan.month.slice(5)}月`).join(' | ');
+    const monthHeaders = planData.monthlyPlans
+      .map((plan) => `${plan.month.slice(5)}月`)
+      .join(' | ');
     lines.push(`| 债务类别 | 总额 | ${monthHeaders} |`);
     lines.push(`|----------|------|${'|'.repeat(planData.monthlyPlans.length)}`);
 
     planData.monthlyPlans[0]?.debts.forEach((debt, index) => {
-      const payments = planData.monthlyPlans.map((plan) => {
-        const currentDebt = plan.debts[index];
-        if (currentDebt.payment === 0) {
-          return '✓';
-        }
-        if (currentDebt.remainingPeriodsAfter === 0) {
-          return `${currentDebt.payment.toFixed(0)}(完)`;
-        }
-        return `${currentDebt.payment.toFixed(0)}(${currentDebt.remainingPeriodsAfter})`;
-      }).join(' | ');
+      const payments = planData.monthlyPlans
+        .map((plan) => {
+          const currentDebt = plan.debts[index];
+          if (currentDebt.payment === 0) {
+            return '✓';
+          }
+          if (currentDebt.remainingPeriodsAfter === 0) {
+            return `${currentDebt.payment.toFixed(0)}(完)`;
+          }
+          return `${currentDebt.payment.toFixed(0)}(${currentDebt.remainingPeriodsAfter})`;
+        })
+        .join(' | ');
 
-      lines.push(`| ${debt.category} | ¥${debt.originalTotal.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} | ${payments} |`);
+      lines.push(
+        `| ${debt.category} | ¥${debt.originalTotal.toLocaleString('zh-CN', {
+          minimumFractionDigits: 2,
+        })} | ${payments} |`
+      );
     });
 
     lines.push('');
@@ -86,7 +118,7 @@ const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
     return lines.join('\n');
   };
 
-  /* 复制到剪贴板 */
+  /** 复制到剪贴板 */
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(generateText());
@@ -102,7 +134,7 @@ const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
     <div className="detail-section">
       <div className="text-version-header">
         <h3>债务还款计划表（可复制版本）</h3>
-        <button className="copy-btn" onClick={handleCopy}>
+        <button className="copy-btn" onClick={() => void handleCopy()}>
           {copied ? '已复制' : '复制全部'}
         </button>
       </div>
@@ -112,14 +144,14 @@ const TextVersion: React.FC<TextVersionProps> = ({ planData }) => {
       </div>
 
       <div className="legend">
-        <p>提示：点击“复制全部”可复制 Markdown 格式表格，并粘贴到 Excel、Notion 或其他文档中</p>
+        <p>提示：点击&quot;复制全部&quot;可复制 Markdown 格式表格，并粘贴到 Excel、Notion 或其他文档中</p>
       </div>
     </div>
   );
-};
+}
 
-/* App组件 */
-const App: React.FC = () => {
+/** App主组件 - 债务现金流规划器 */
+function App(): React.JSX.Element {
   const [planData, setPlanData] = useState<DebtPlanResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -134,13 +166,14 @@ const App: React.FC = () => {
   const [isUsingStoredData, setIsUsingStoredData] = useState<boolean>(() => hasStoredDebts());
 
   const storageNotice = useMemo(
-    () => (isUsingStoredData
-      ? '当前数据已保存到本机浏览器，支持离线打开，也可通过“编辑负债列表”导出 JSON 进行备份。'
-      : '当前展示的是内置示例数据。首次保存后，数据将存储到当前设备浏览器。'),
+    () =>
+      isUsingStoredData
+        ? '当前数据已保存到本机浏览器，支持离线打开，也可通过&quot;编辑负债列表&quot;导出 JSON 进行备份。'
+        : '当前展示的是内置示例数据。首次保存后，数据将存储到当前设备浏览器。',
     [isUsingStoredData]
   );
 
-  /* 在前端本地重新计算还款计划 */
+  /** 在前端本地重新计算还款计划 */
   const recalculatePlan = useCallback(() => {
     setLoading(true);
     setError(null);
@@ -173,19 +206,19 @@ const App: React.FC = () => {
     return () => window.clearTimeout(timer);
   }, [saveSuccessMessage]);
 
-  /* 手动触发重新计算 */
+  /** 手动触发重新计算 */
   const handleRecalculate = () => {
     recalculatePlan();
   };
 
-  /* 打开债务编辑弹窗 */
+  /** 打开债务编辑弹窗 */
   const handleOpenDebtModal = () => {
     setDebtError(null);
     setSaveSuccessMessage(null);
     setIsDebtModalOpen(true);
   };
 
-  /* 恢复默认示例数据 */
+  /** 恢复默认示例数据 */
   const handleRestoreDefaults = () => {
     if (!window.confirm('确定恢复内置示例数据吗？当前设备已保存的数据将被覆盖。')) {
       return;
@@ -202,7 +235,8 @@ const App: React.FC = () => {
     }
   };
 
-  /* 保存债务列表到本地浏览器并刷新结果 */
+  /** 保存债务列表到本地浏览器并刷新结果 */
+  // eslint-disable-next-line @typescript-eslint/require-await
   const handleSaveDebts = async (updatedDebts: DebtItem[]) => {
     setDebtsSaving(true);
     setDebtError(null);
@@ -212,7 +246,9 @@ const App: React.FC = () => {
       setDebts(savedDebts);
       setIsUsingStoredData(true);
       setIsDebtModalOpen(false);
-      setSaveSuccessMessage(`负债列表已保存到当前设备，共 ${savedDebts.length} 条债务，主页面数据已刷新。`);
+      setSaveSuccessMessage(
+        `负债列表已保存到当前设备，共 ${savedDebts.length} 条债务，主页面数据已刷新。`
+      );
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : '保存债务数据失败';
       setDebtError(message);
@@ -222,15 +258,15 @@ const App: React.FC = () => {
     }
   };
 
-  /* 格式化货币 */
+  /** 格式化货币 */
   const formatCurrency = (value: number): string => {
     return `¥${value.toLocaleString('zh-CN', {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     })}`;
   };
 
-  /* 格式化月份显示 */
+  /** 格式化月份显示 */
   const formatMonth = (monthStr: string): string => {
     const [year, month] = monthStr.split('-');
     return `${year}年${month}月`;
@@ -268,9 +304,7 @@ const App: React.FC = () => {
             </div>
           </div>
           {saveSuccessMessage && (
-            <div className="save-success-banner">
-              {saveSuccessMessage}
-            </div>
+            <div className="save-success-banner">{saveSuccessMessage}</div>
           )}
           <div className="params-form">
             <div className="form-group">
@@ -337,13 +371,20 @@ const App: React.FC = () => {
         {planData && !loading && !error && (
           <>
             <div className="time-range-banner">
-              <p>计算时间范围：<strong>{formatMonth(planData.startMonth)} ~ {formatMonth(planData.endMonth)}</strong></p>
+              <p>
+                计算时间范围：
+                <strong>
+                  {formatMonth(planData.startMonth)} ~ {formatMonth(planData.endMonth)}
+                </strong>
+              </p>
             </div>
 
             <div className="summary-section">
               <div className="summary-card">
                 <h4>总债务金额</h4>
-                <p className="amount">{formatCurrency(planData.initialDebtSummary.totalDebtAmount)}</p>
+                <p className="amount">
+                  {formatCurrency(planData.initialDebtSummary.totalDebtAmount)}
+                </p>
               </div>
 
               <div className="summary-card">
@@ -393,7 +434,9 @@ const App: React.FC = () => {
                     {planData.monthlyPlans.map((plan) => (
                       <tr key={plan.month}>
                         <td className="month-cell">{formatMonth(plan.month)}</td>
-                        <td className="amount-cell">{formatCurrency(plan.totalRepayment)}</td>
+                        <td className="amount-cell">
+                          {formatCurrency(plan.totalRepayment)}
+                        </td>
                         <td className={plan.surplus > 0 ? 'positive' : 'negative'}>
                           {formatCurrency(plan.surplus)}
                         </td>
@@ -427,23 +470,33 @@ const App: React.FC = () => {
                           month: plan.month,
                           payment: currentDebt.payment,
                           remaining: currentDebt.remainingPeriodsAfter,
-                          isPaidOff: currentDebt.remainingPeriodsBefore > 0 && currentDebt.remainingPeriodsAfter === 0
+                          isPaidOff:
+                            currentDebt.remainingPeriodsBefore > 0 &&
+                            currentDebt.remainingPeriodsAfter === 0,
                         };
                       });
 
                       return (
                         <tr key={debt.category}>
                           <td className="category-cell">{debt.category}</td>
-                          <td className="amount-cell">{formatCurrency(debt.originalTotal)}</td>
+                          <td className="amount-cell">
+                            {formatCurrency(debt.originalTotal)}
+                          </td>
                           {monthlyPayments.map((monthPlan) => (
                             <td
                               key={monthPlan.month}
-                              className={`payment-cell ${monthPlan.isPaidOff ? 'paid-off' : ''} ${monthPlan.payment === 0 ? 'finished' : ''}`}
+                              className={`payment-cell ${
+                                monthPlan.isPaidOff ? 'paid-off' : ''
+                              } ${monthPlan.payment === 0 ? 'finished' : ''}`}
                             >
                               {monthPlan.payment > 0 ? (
                                 <>
-                                  <div className="payment-amount">{monthPlan.payment.toFixed(0)}</div>
-                                  <div className="remaining-label">剩{monthPlan.remaining}期</div>
+                                  <div className="payment-amount">
+                                    {monthPlan.payment.toFixed(0)}
+                                  </div>
+                                  <div className="remaining-label">
+                                    剩{monthPlan.remaining}期
+                                  </div>
                                 </>
                               ) : (
                                 <span className="done-label">✓</span>
@@ -458,8 +511,12 @@ const App: React.FC = () => {
               </div>
 
               <div className="legend">
-                <p><span className="legend-item paid-off"></span> 本月最后一期</p>
-                <p><span className="legend-item finished"></span> 已还清</p>
+                <p>
+                  <span className="legend-item paid-off"></span> 本月最后一期
+                </p>
+                <p>
+                  <span className="legend-item finished"></span> 已还清
+                </p>
               </div>
             </div>
 
@@ -482,6 +539,6 @@ const App: React.FC = () => {
       />
     </div>
   );
-};
+}
 
 export default App;

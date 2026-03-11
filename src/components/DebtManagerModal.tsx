@@ -1,5 +1,5 @@
-import React, { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { DebtItem } from '../types/debt';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import type { DebtItem } from '../types/debt';
 
 interface DebtManagerModalProps {
   isOpen: boolean;
@@ -16,18 +16,20 @@ const emptyDraft: DebtItem = {
   totalAmount: 0,
   remainingPeriods: 0,
   monthlyPayment: 0,
-  nextRepaymentMonth: ''
+  nextRepaymentMonth: '',
 };
 
 const repaymentMonthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/** 格式化货币 */
 function formatCurrency(value: number): string {
   return `¥${value.toLocaleString('zh-CN', {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    maximumFractionDigits: 2,
   })}`;
 }
 
+/** 创建草稿对象 */
 function createDraft(debt?: DebtItem): DebtItem {
   if (!debt) {
     return { ...emptyDraft };
@@ -38,31 +40,47 @@ function createDraft(debt?: DebtItem): DebtItem {
     totalAmount: debt.totalAmount,
     remainingPeriods: debt.remainingPeriods,
     monthlyPayment: debt.monthlyPayment,
-    nextRepaymentMonth: debt.nextRepaymentMonth || ''
+    nextRepaymentMonth: debt.nextRepaymentMonth ?? '',
   };
 }
 
+/** 规范化债务项 */
 function normalizeDebtItem(debt: DebtItem): DebtItem {
-  const trimmedMonth = debt.nextRepaymentMonth?.trim() || '';
+  const trimmedMonth = debt.nextRepaymentMonth?.trim() ?? '';
 
   return {
     category: debt.category.trim(),
     totalAmount: Number(debt.totalAmount),
     remainingPeriods: Number(debt.remainingPeriods),
     monthlyPayment: Number(debt.monthlyPayment),
-    nextRepaymentMonth: trimmedMonth || undefined
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+    nextRepaymentMonth: trimmedMonth || undefined,
   };
 }
 
-const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
+/** 类型守卫：验证对象是否为类似 DebtItem 的结构 */
+function isDebtItemLike(item: unknown): item is Partial<DebtItem> {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    return false;
+  }
+  const candidate = item as Record<string, unknown>;
+  return (
+    'category' in candidate &&
+    'totalAmount' in candidate &&
+    'remainingPeriods' in candidate &&
+    'monthlyPayment' in candidate
+  );
+}
+
+function DebtManagerModal({
   isOpen,
   debts,
   loading,
   saving,
   errorMessage,
   onClose,
-  onSave
-}) => {
+  onSave,
+}: DebtManagerModalProps): React.JSX.Element | null {
   const [localDebts, setLocalDebts] = useState<DebtItem[]>([]);
   const [draft, setDraft] = useState<DebtItem>(createDraft());
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -134,12 +152,13 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, handleRequestClose]);
 
-  const handleDraftChange = (
-    field: keyof DebtItem,
-    event: ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleDraftChange = (field: keyof DebtItem, event: ChangeEvent<HTMLInputElement>) => {
     const rawValue = event.target.value;
-    const numericFields: Array<keyof DebtItem> = ['totalAmount', 'remainingPeriods', 'monthlyPayment'];
+    const numericFields: Array<keyof DebtItem> = [
+      'totalAmount',
+      'remainingPeriods',
+      'monthlyPayment',
+    ];
 
     setDraft((prev) => ({
       ...prev,
@@ -147,7 +166,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
         ? rawValue === ''
           ? 0
           : Number(rawValue)
-        : rawValue
+        : rawValue,
     }));
   };
 
@@ -162,7 +181,10 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
       return '总金额必须是大于等于 0 的数字';
     }
 
-    if (!Number.isInteger(normalizedDebt.remainingPeriods) || normalizedDebt.remainingPeriods < 0) {
+    if (
+      !Number.isInteger(normalizedDebt.remainingPeriods) ||
+      normalizedDebt.remainingPeriods < 0
+    ) {
       return '剩余期数必须是大于等于 0 的整数';
     }
 
@@ -188,9 +210,10 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
 
     const normalizedDebt = normalizeDebtItem(candidate);
 
-    const duplicatedCategory = localDebts.some((item, index) => (
-      index !== indexToIgnore && item.category.trim() === normalizedDebt.category
-    ));
+    const duplicatedCategory = localDebts.some(
+      (item, index) =>
+        index !== indexToIgnore && item.category.trim() === normalizedDebt.category
+    );
 
     if (duplicatedCategory) {
       return '债务类别不能重复';
@@ -200,13 +223,16 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
   };
 
   const parseImportPayload = (text: string, sourceName: string) => {
-    const parsedData = JSON.parse(text);
+    const parsedData = JSON.parse(text) as unknown;
 
     if (!Array.isArray(parsedData)) {
       throw new Error('导入内容必须是债务数组');
     }
 
-    const normalizedDebts = parsedData.map((item) => normalizeDebtItem(item as DebtItem));
+    // 使用类型守卫过滤有效数据
+    const validDebts = parsedData.filter(isDebtItemLike);
+    const normalizedDebts = validDebts.map((item) => normalizeDebtItem(item as DebtItem));
+
     normalizedDebts.forEach((item, index) => {
       const validationMessage = validateDebtFields(item);
       if (validationMessage) {
@@ -226,13 +252,12 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
     setPendingImportFileName(sourceName);
   };
 
-  const isDraftBlank = (): boolean => (
+  const isDraftBlank = (): boolean =>
     draft.category.trim() === '' &&
     Number(draft.totalAmount) === 0 &&
     Number(draft.remainingPeriods) === 0 &&
     Number(draft.monthlyPayment) === 0 &&
-    !(draft.nextRepaymentMonth || '').trim()
-  );
+    !(draft.nextRepaymentMonth ?? '').trim();
 
   const buildNextDebtsWithDraft = (): DebtItem[] | null => {
     if (editingIndex === null && isDraftBlank()) {
@@ -292,7 +317,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
       updated,
       unchanged,
       removed,
-      totalAfterImport: pendingImportDebts.length
+      totalAfterImport: pendingImportDebts.length,
     };
   }, [pendingImportDebts, localDebts]);
 
@@ -308,7 +333,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
       return;
     }
 
-    if (!window.confirm(`确定删除“${targetDebt.category}”吗？`)) {
+    if (!window.confirm(`确定删除"${targetDebt.category}"吗？`)) {
       return;
     }
 
@@ -433,12 +458,16 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
           >
             + 添加债务
           </button>
-          <label className={`toolbar-btn secondary file-import-btn ${importing || loading || saving ? 'disabled' : ''}`}>
+          <label
+            className={`toolbar-btn secondary file-import-btn ${
+              importing || loading || saving ? 'disabled' : ''
+            }`}
+          >
             选择文件
             <input
               type="file"
               accept="application/json"
-              onChange={handleImportFile}
+              onChange={(e) => void handleImportFile(e)}
               disabled={importing || loading || saving}
             />
           </label>
@@ -466,10 +495,8 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
           </span>
         </div>
 
-        {(errorMessage || formError) && (
-          <div className="debt-modal-error">
-            {errorMessage || formError}
-          </div>
+        {(errorMessage ?? formError) && (
+          <div className="debt-modal-error">{errorMessage ?? formError}</div>
         )}
 
         {showPasteImporter && (
@@ -477,7 +504,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
             <div className="paste-import-header">
               <div>
                 <h3>直接粘贴 JSON</h3>
-                <p>将债务数组 JSON 粘贴到输入框中，再点击“预览导入差异”。</p>
+                <p>将债务数组 JSON 粘贴到输入框中，再点击&quot;预览导入差异&quot;。</p>
               </div>
               <button
                 type="button"
@@ -492,7 +519,9 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
               className="paste-import-textarea"
               value={pastedJsonText}
               onChange={(event) => setPastedJsonText(event.target.value)}
-              placeholder={'[\n  {\n    "category": "信用卡分期",\n    "totalAmount": 5000,\n    "remainingPeriods": 12,\n    "monthlyPayment": 300,\n    "nextRepaymentMonth": "2026-04"\n  }\n]'}
+              placeholder={
+                '[\n  {\n    "category": "信用卡分期",\n    "totalAmount": 5000,\n    "remainingPeriods": 12,\n    "monthlyPayment": 300,\n    "nextRepaymentMonth": "2026-04"\n  }\n]'
+              }
               spellCheck={false}
             />
           </div>
@@ -504,7 +533,8 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
               <div>
                 <h3>导入差异预览</h3>
                 <p>
-                  来源：{pendingImportFileName || '未命名内容'}，应用后将保留 {importPreview.totalAfterImport} 条债务。
+                  来源：{pendingImportFileName ?? '未命名内容'}，应用后将保留{' '}
+                  {importPreview.totalAfterImport} 条债务。
                 </p>
               </div>
               <div className="import-preview-actions">
@@ -582,7 +612,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
                     <td>{formatCurrency(debt.totalAmount)}</td>
                     <td>{debt.remainingPeriods}</td>
                     <td>{formatCurrency(debt.monthlyPayment)}</td>
-                    <td>{debt.nextRepaymentMonth || '立即开始'}</td>
+                    <td>{debt.nextRepaymentMonth ?? '立即开始'}</td>
                     <td>
                       <div className="table-actions">
                         <button
@@ -662,7 +692,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
                 <input
                   id="debt-next-month"
                   type="month"
-                  value={draft.nextRepaymentMonth || ''}
+                  value={draft.nextRepaymentMonth ?? ''}
                   onChange={(event) => handleDraftChange('nextRepaymentMonth', event)}
                 />
               </div>
@@ -688,7 +718,7 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
               <button
                 type="button"
                 className="toolbar-btn primary"
-                onClick={handleSaveAll}
+                onClick={() => void handleSaveAll()}
                 disabled={loading || saving || importing}
               >
                 {saving ? '保存中...' : '保存全部并关闭'}
@@ -699,6 +729,6 @@ const DebtManagerModal: React.FC<DebtManagerModalProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default DebtManagerModal;

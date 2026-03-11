@@ -5,10 +5,10 @@ const STORAGE_KEY = 'debt-planner:debts';
 const repaymentMonthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 function normalizeDebtItem(debt: DebtItem): DebtItem {
-  const trimmedMonth = debt.nextRepaymentMonth?.trim() || '';
+  const trimmedMonth = debt.nextRepaymentMonth?.trim() ?? '';
 
   return {
-    category: String(debt.category || '').trim(),
+    category: String(debt.category ?? '').trim(),
     totalAmount: Number(debt.totalAmount),
     remainingPeriods: Number(debt.remainingPeriods),
     monthlyPayment: Number(debt.monthlyPayment),
@@ -58,7 +58,8 @@ export function loadDebtsFromStorage(): DebtItem[] {
       return defaultDebts;
     }
 
-    const parsedValue = JSON.parse(rawValue);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const parsedValue: unknown = JSON.parse(rawValue);
     if (!isValidDebtList(parsedValue)) {
       throw new Error('本地债务数据格式无效');
     }

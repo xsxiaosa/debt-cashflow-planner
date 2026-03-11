@@ -1,17 +1,18 @@
-/* 注册静态 service worker，用于提供基础离线缓存能力 */
+/**
+ * 注册静态 service worker，用于提供基础离线缓存能力
+ */
 
-export function registerServiceWorker() {
+export function registerServiceWorker(): void {
   if (process.env.NODE_ENV !== 'production' || !('serviceWorker' in navigator)) {
     return;
   }
 
   window.addEventListener('load', () => {
-    const publicUrl = process.env.PUBLIC_URL || '.';
+    const publicUrl = process.env.PUBLIC_URL ?? '.';
     const swUrl = `${publicUrl}/sw.js`;
 
-    navigator.serviceWorker.register(swUrl)
-      .catch((error) => {
-        console.error('注册 service worker 失败:', error);
-      });
+    navigator.serviceWorker.register(swUrl).catch((error) => {
+      console.error('注册 service worker 失败:', error);
+    });
   });
 }

@@ -50,7 +50,7 @@ export function calculateDebtPlan(
         remainingPeriodsBefore: remainingBefore,
         remainingPeriodsAfter: debt.remainingPeriods,
         monthlyPayment: debt.monthlyPayment,
-        nextRepaymentMonth: debt.nextRepaymentMonth || null
+        nextRepaymentMonth: debt.nextRepaymentMonth ?? null
       });
     }
 
