@@ -38,6 +38,7 @@ export interface MonthlyPlan {
 
 export interface InitialDebtSummary {
   totalDebtAmount: number;
+  totalOutstandingPayment: number;
   totalDebts: number;
   totalMonthlyPayment: number;
 }

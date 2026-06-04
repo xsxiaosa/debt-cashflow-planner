@@ -104,6 +104,31 @@ function calculateDebtStateAtPlanStart(debt: DebtItem, planStartMonth: string): 
   };
 }
 
+function calculateOutstandingPayment(debt: ActiveDebt): number {
+  let remainingPrincipal = roundMoney(debt.remainingPrincipal);
+  let remainingPeriods = debt.remainingPeriods;
+  let totalPayment = 0;
+
+  while (remainingPeriods > 0) {
+    const remainingPrincipalBefore = roundMoney(remainingPrincipal);
+    const monthlyRate = debt.annualInterestRate / 12 / 100;
+    const interest = roundMoney(remainingPrincipalBefore * monthlyRate);
+    let principal = roundMoney(debt.calculatedMonthlyPayment - interest);
+    let payment = debt.calculatedMonthlyPayment;
+
+    if (remainingPeriods === 1 || principal > remainingPrincipalBefore) {
+      principal = remainingPrincipalBefore;
+      payment = roundMoney(principal + interest);
+    }
+
+    totalPayment += payment;
+    remainingPrincipal = roundMoney(remainingPrincipalBefore - principal);
+    remainingPeriods -= 1;
+  }
+
+  return roundMoney(totalPayment);
+}
+
 export function calculateDebtPlan(
   debts: DebtItem[],
   monthlyIncome = 22000,
@@ -118,6 +143,9 @@ export function calculateDebtPlan(
   const startMonth = getMonthLabel(startDate);
   const currentDebts: ActiveDebt[] = debts.map((debt) =>
     calculateDebtStateAtPlanStart(debt, startMonth)
+  );
+  const totalOutstandingPaymentAtPlanStart = roundMoney(
+    currentDebts.reduce((sum, debt) => sum + calculateOutstandingPayment(debt), 0)
   );
   let cumulativeCash = currentCash;
 
@@ -216,6 +244,7 @@ export function calculateDebtPlan(
     currentCash,
     initialDebtSummary: {
       totalDebtAmount: debts.reduce((sum, debt) => sum + debt.totalAmount, 0),
+      totalOutstandingPayment: totalOutstandingPaymentAtPlanStart,
       totalDebts: debts.length,
       totalMonthlyPayment: roundMoney(
         debts.reduce(

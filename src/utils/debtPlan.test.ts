@@ -70,6 +70,35 @@ describe('calculateDebtPlan', () => {
     expect(plan.monthlyPlans[8].debts[0].payment).toBe(0);
   });
 
+  it('reports total outstanding payment across all remaining installments', () => {
+    const debts: DebtItem[] = [
+      {
+        category: '短期免息',
+        totalAmount: 3000,
+        remainingPeriods: 3,
+        annualInterestRate: 0
+      },
+      {
+        category: '历史开始',
+        totalAmount: 1200,
+        remainingPeriods: 12,
+        annualInterestRate: 0,
+        nextRepaymentMonth: '2026-02'
+      },
+      {
+        category: '计划外长期',
+        totalAmount: 12000,
+        remainingPeriods: 12,
+        annualInterestRate: 12
+      }
+    ];
+
+    const plan = calculateDebtPlan(debts, 10000, 0, 2, new Date(2026, 5, 4));
+
+    expect(plan.annualTotalRepayment).toBeCloseTo(4332.38, 2);
+    expect(plan.initialDebtSummary.totalOutstandingPayment).toBeCloseTo(16594.23, 2);
+  });
+
   it('splits zero-interest installment payments evenly across principal', () => {
     const debts: DebtItem[] = [
       {

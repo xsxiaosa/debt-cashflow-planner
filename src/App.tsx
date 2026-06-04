@@ -16,6 +16,16 @@ interface TextVersionProps {
   planData: DebtPlanResponse;
 }
 
+type DebtSummaryWithOutstanding = DebtPlanResponse['initialDebtSummary'] & {
+  totalOutstandingPayment: number;
+};
+
+function getTotalOutstandingPayment(
+  summary: DebtPlanResponse['initialDebtSummary']
+): number {
+  return (summary as DebtSummaryWithOutstanding).totalOutstandingPayment;
+}
+
 /** 可复制文本版本组件 */
 function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
   const [copied, setCopied] = useState(false);
@@ -35,6 +45,13 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
     lines.push('|------|------|');
     lines.push(
       `| 总债务金额 | ¥${planData.initialDebtSummary.totalDebtAmount.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
+    lines.push(
+      `| 总待还款金额 | ¥${getTotalOutstandingPayment(
+        planData.initialDebtSummary
+      ).toLocaleString('zh-CN', {
         minimumFractionDigits: 2,
       })} |`
     );
@@ -402,12 +419,19 @@ function App(): React.JSX.Element {
                 </p>
               </div>
 
+              <div className="summary-card total">
+                <h4>总待还款金额</h4>
+                <p className="amount">
+                  {formatCurrency(getTotalOutstandingPayment(planData.initialDebtSummary))}
+                </p>
+              </div>
+
               <div className="summary-card">
                 <h4>债务笔数</h4>
                 <p className="amount">{planData.initialDebtSummary.totalDebts} 笔</p>
               </div>
 
-              <div className="summary-card total">
+              <div className="summary-card">
                 <h4>{planData.planMonths}个月总还款</h4>
                 <p className="amount">{formatCurrency(planData.annualTotalRepayment)}</p>
               </div>
