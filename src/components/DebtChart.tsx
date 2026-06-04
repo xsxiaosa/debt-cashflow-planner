@@ -29,6 +29,8 @@ interface ChartDataItem {
   month: string;
   fullMonth: string;
   totalRepayment: number;
+  totalPrincipal: number;
+  totalInterest: number;
   surplus: number;
   cumulativeCash: number;
   income: number;
@@ -81,6 +83,10 @@ function CustomTooltip({ active, payload }: TooltipProps<ValueType, NameType>): 
           还款总额: {formatCurrency(data.totalRepayment)}
         </p>
 
+        <p style={{ margin: '0 0 4px 0', color: '#666', fontSize: '12px' }}>
+          本金: {formatCurrency(data.totalPrincipal)} / 利息: {formatCurrency(data.totalInterest)}
+        </p>
+
         <p
           style={{
             margin: '0 0 4px 0',
@@ -118,7 +124,10 @@ function CustomTooltip({ active, payload }: TooltipProps<ValueType, NameType>): 
           .filter((debt: MonthlyPlan['debts'][number]) => debt.payment > 0)
           .map((debt: MonthlyPlan['debts'][number], index: number) => (
             <p key={index} style={{ margin: '2px 0', fontSize: '11px', color: '#666' }}>
-              {debt.category}: {debt.payment.toFixed(2)}
+              {debt.category}: {formatCurrency(debt.payment)}
+              <span style={{ color: '#999', marginLeft: '6px' }}>
+                本{debt.principal.toFixed(2)} / 息{debt.interest.toFixed(2)}
+              </span>
               <span
                 style={{
                   color: debt.remainingPeriodsAfter === 0 ? '#4caf50' : '#999',
@@ -179,6 +188,8 @@ function DebtChart({
     month: `${plan.monthNum}月`,
     fullMonth: plan.month,
     totalRepayment: plan.totalRepayment,
+    totalPrincipal: plan.totalPrincipal,
+    totalInterest: plan.totalInterest,
     surplus: plan.surplus,
     cumulativeCash: plan.cumulativeCash,
     income: monthlyIncome,

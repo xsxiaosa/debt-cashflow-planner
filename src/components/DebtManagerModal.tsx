@@ -14,8 +14,8 @@ interface DebtManagerModalProps {
 const emptyDraft: DebtItem = {
   category: '',
   totalAmount: 0,
-  remainingPeriods: 0,
-  monthlyPayment: 0,
+  remainingPeriods: 1,
+  annualInterestRate: 0,
   nextRepaymentMonth: '',
 };
 
@@ -39,9 +39,27 @@ function createDraft(debt?: DebtItem): DebtItem {
     category: debt.category,
     totalAmount: debt.totalAmount,
     remainingPeriods: debt.remainingPeriods,
-    monthlyPayment: debt.monthlyPayment,
+    annualInterestRate: debt.annualInterestRate,
     nextRepaymentMonth: debt.nextRepaymentMonth ?? '',
   };
+}
+
+function calculateEstimatedMonthlyPayment(debt: DebtItem): number {
+  const principal = Number(debt.totalAmount);
+  const periods = Number(debt.remainingPeriods);
+  const annualRate = Number(debt.annualInterestRate);
+
+  if (!Number.isFinite(principal) || !Number.isInteger(periods) || periods <= 0) {
+    return 0;
+  }
+
+  const monthlyRate = annualRate / 12 / 100;
+  if (monthlyRate === 0) {
+    return principal / periods;
+  }
+
+  const factor = Math.pow(1 + monthlyRate, periods);
+  return (principal * monthlyRate * factor) / (factor - 1);
 }
 
 /** 规范化债务项 */
@@ -52,7 +70,7 @@ function normalizeDebtItem(debt: DebtItem): DebtItem {
     category: debt.category.trim(),
     totalAmount: Number(debt.totalAmount),
     remainingPeriods: Number(debt.remainingPeriods),
-    monthlyPayment: Number(debt.monthlyPayment),
+    annualInterestRate: Number(debt.annualInterestRate),
     // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
     nextRepaymentMonth: trimmedMonth || undefined,
   };
@@ -68,7 +86,8 @@ function isDebtItemLike(item: unknown): item is Partial<DebtItem> {
     'category' in candidate &&
     'totalAmount' in candidate &&
     'remainingPeriods' in candidate &&
-    'monthlyPayment' in candidate
+    'annualInterestRate' in candidate &&
+    !('monthlyPayment' in candidate)
   );
 }
 
@@ -157,7 +176,7 @@ function DebtManagerModal({
     const numericFields: Array<keyof DebtItem> = [
       'totalAmount',
       'remainingPeriods',
-      'monthlyPayment',
+      'annualInterestRate',
     ];
 
     setDraft((prev) => ({
@@ -178,25 +197,28 @@ function DebtManagerModal({
     }
 
     if (!Number.isFinite(normalizedDebt.totalAmount) || normalizedDebt.totalAmount < 0) {
-      return '总金额必须是大于等于 0 的数字';
+      return '总借款金额必须是大于等于 0 的数字';
     }
 
     if (
       !Number.isInteger(normalizedDebt.remainingPeriods) ||
-      normalizedDebt.remainingPeriods < 0
+      normalizedDebt.remainingPeriods < 1
     ) {
-      return '剩余期数必须是大于等于 0 的整数';
+      return '分期数必须是大于等于 1 的整数';
     }
 
-    if (!Number.isFinite(normalizedDebt.monthlyPayment) || normalizedDebt.monthlyPayment < 0) {
-      return '每期还款额必须是大于等于 0 的数字';
+    if (
+      !Number.isFinite(normalizedDebt.annualInterestRate) ||
+      normalizedDebt.annualInterestRate < 0
+    ) {
+      return '年化利息必须是大于等于 0 的数字';
     }
 
     if (
       normalizedDebt.nextRepaymentMonth &&
       !repaymentMonthPattern.test(normalizedDebt.nextRepaymentMonth)
     ) {
-      return '下次开始还款月份必须是 YYYY-MM 格式';
+      return '第一次还款月份必须是 YYYY-MM 格式';
     }
 
     return null;
@@ -255,8 +277,8 @@ function DebtManagerModal({
   const isDraftBlank = (): boolean =>
     draft.category.trim() === '' &&
     Number(draft.totalAmount) === 0 &&
-    Number(draft.remainingPeriods) === 0 &&
-    Number(draft.monthlyPayment) === 0 &&
+    Number(draft.remainingPeriods) === 1 &&
+    Number(draft.annualInterestRate) === 0 &&
     !(draft.nextRepaymentMonth ?? '').trim();
 
   const buildNextDebtsWithDraft = (): DebtItem[] | null => {
@@ -345,6 +367,20 @@ function DebtManagerModal({
     } else if (editingIndex !== null && editingIndex > index) {
       setEditingIndex(editingIndex - 1);
     }
+  };
+
+  const handleClearDebts = () => {
+    if (localDebts.length === 0) {
+      return;
+    }
+
+    if (!window.confirm(`确定清空全部 ${localDebts.length} 条债务吗？此操作保存前仍可关闭弹窗放弃。`)) {
+      return;
+    }
+
+    setLocalDebts([]);
+    resetEditor();
+    clearImportPreview();
   };
 
   const handleSaveCurrent = () => {
@@ -490,6 +526,14 @@ function DebtManagerModal({
           >
             导出 JSON
           </button>
+          <button
+            type="button"
+            className="toolbar-btn danger"
+            onClick={handleClearDebts}
+            disabled={loading || saving || localDebts.length === 0}
+          >
+            一键清空
+          </button>
           <span className="toolbar-summary">
             当前共 {localDebts.length} 条债务{hasUnsavedChanges ? '，含未保存修改' : ''}
           </span>
@@ -520,7 +564,7 @@ function DebtManagerModal({
               value={pastedJsonText}
               onChange={(event) => setPastedJsonText(event.target.value)}
               placeholder={
-                '[\n  {\n    "category": "信用卡分期",\n    "totalAmount": 5000,\n    "remainingPeriods": 12,\n    "monthlyPayment": 300,\n    "nextRepaymentMonth": "2026-04"\n  }\n]'
+                '[\n  {\n    "category": "信用卡分期",\n    "totalAmount": 5000,\n    "remainingPeriods": 12,\n    "annualInterestRate": 7.2,\n    "nextRepaymentMonth": "2026-04"\n  }\n]'
               }
               spellCheck={false}
             />
@@ -591,10 +635,11 @@ function DebtManagerModal({
               <thead>
                 <tr>
                   <th>类别</th>
-                  <th>总金额</th>
-                  <th>剩余期数</th>
-                  <th>每期还款额</th>
-                  <th>开始月份</th>
+                  <th>总借款金额</th>
+                  <th>分期数</th>
+                  <th>年化利息</th>
+                  <th>预计月供</th>
+                  <th>第一次还款月份</th>
                   <th>操作</th>
                 </tr>
               </thead>
@@ -611,7 +656,8 @@ function DebtManagerModal({
                     <td>{debt.category}</td>
                     <td>{formatCurrency(debt.totalAmount)}</td>
                     <td>{debt.remainingPeriods}</td>
-                    <td>{formatCurrency(debt.monthlyPayment)}</td>
+                    <td>{debt.annualInterestRate.toFixed(2)}%</td>
+                    <td>{formatCurrency(calculateEstimatedMonthlyPayment(debt))}</td>
                     <td>{debt.nextRepaymentMonth ?? '立即开始'}</td>
                     <td>
                       <div className="table-actions">
@@ -652,7 +698,7 @@ function DebtManagerModal({
               </div>
 
               <div className="form-group">
-                <label htmlFor="debt-total-amount">总金额</label>
+                <label htmlFor="debt-total-amount">总借款金额</label>
                 <input
                   id="debt-total-amount"
                   type="number"
@@ -664,11 +710,11 @@ function DebtManagerModal({
               </div>
 
               <div className="form-group">
-                <label htmlFor="debt-remaining-periods">剩余期数</label>
+                <label htmlFor="debt-remaining-periods">分期数</label>
                 <input
                   id="debt-remaining-periods"
                   type="number"
-                  min="0"
+                  min="1"
                   step="1"
                   value={draft.remainingPeriods}
                   onChange={(event) => handleDraftChange('remainingPeriods', event)}
@@ -676,19 +722,19 @@ function DebtManagerModal({
               </div>
 
               <div className="form-group">
-                <label htmlFor="debt-monthly-payment">每期还款额</label>
+                <label htmlFor="debt-annual-interest-rate">年化利息（%）</label>
                 <input
-                  id="debt-monthly-payment"
+                  id="debt-annual-interest-rate"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={draft.monthlyPayment}
-                  onChange={(event) => handleDraftChange('monthlyPayment', event)}
+                  value={draft.annualInterestRate}
+                  onChange={(event) => handleDraftChange('annualInterestRate', event)}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="debt-next-month">下次开始还款月份</label>
+                <label htmlFor="debt-next-month">第一次还款月份</label>
                 <input
                   id="debt-next-month"
                   type="month"

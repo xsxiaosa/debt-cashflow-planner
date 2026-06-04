@@ -11,7 +11,7 @@ function normalizeDebtItem(debt: DebtItem): DebtItem {
     category: String(debt.category ?? '').trim(),
     totalAmount: Number(debt.totalAmount),
     remainingPeriods: Number(debt.remainingPeriods),
-    monthlyPayment: Number(debt.monthlyPayment),
+    annualInterestRate: Number(debt.annualInterestRate),
     nextRepaymentMonth: trimmedMonth || undefined
   };
 }
@@ -22,8 +22,10 @@ export function isValidDebtItem(debt: unknown): debt is DebtItem {
   }
 
   const candidate = debt as DebtItem;
+  const rawCandidate = debt as Record<string, unknown>;
 
   return (
+    !('monthlyPayment' in rawCandidate) &&
     typeof candidate.category === 'string' &&
     candidate.category.trim().length > 0 &&
     typeof candidate.totalAmount === 'number' &&
@@ -31,10 +33,10 @@ export function isValidDebtItem(debt: unknown): debt is DebtItem {
     candidate.totalAmount >= 0 &&
     typeof candidate.remainingPeriods === 'number' &&
     Number.isInteger(candidate.remainingPeriods) &&
-    candidate.remainingPeriods >= 0 &&
-    typeof candidate.monthlyPayment === 'number' &&
-    Number.isFinite(candidate.monthlyPayment) &&
-    candidate.monthlyPayment >= 0 &&
+    candidate.remainingPeriods >= 1 &&
+    typeof candidate.annualInterestRate === 'number' &&
+    Number.isFinite(candidate.annualInterestRate) &&
+    candidate.annualInterestRate >= 0 &&
     (
       candidate.nextRepaymentMonth === undefined ||
       candidate.nextRepaymentMonth === null ||

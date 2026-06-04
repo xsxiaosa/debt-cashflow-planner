@@ -1,4 +1,6 @@
-import { DebtItem, DebtPlanResponse } from '../types/debt';
+import { DebtDetail, DebtItem, DebtPlanResponse, MonthlyPlan } from '../types/debt';
+
+const MONEY_PRECISION = 2;
 
 function getMonthLabel(date: Date): string {
   const year = date.getFullYear();
@@ -10,18 +12,113 @@ function isRepaymentMonthReached(currentMonth: string, nextRepaymentMonth?: stri
   return !nextRepaymentMonth || currentMonth >= nextRepaymentMonth;
 }
 
+function parseMonthLabel(monthLabel: string): { year: number; monthIndex: number } | null {
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(monthLabel);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    monthIndex: Number(match[2]) - 1
+  };
+}
+
+function getElapsedRepaymentPeriods(startMonth: string, planStartMonth: string): number {
+  const repaymentStart = parseMonthLabel(startMonth);
+  const planStart = parseMonthLabel(planStartMonth);
+
+  if (!repaymentStart || !planStart) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    (planStart.year - repaymentStart.year) * 12 +
+      (planStart.monthIndex - repaymentStart.monthIndex)
+  );
+}
+
+function getStartOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function roundMoney(value: number): number {
+  return Number(value.toFixed(MONEY_PRECISION));
+}
+
+function calculateMonthlyPayment(totalAmount: number, periods: number, annualInterestRate: number): number {
+  if (periods <= 0) {
+    return 0;
+  }
+
+  const monthlyRate = annualInterestRate / 12 / 100;
+  if (monthlyRate === 0) {
+    return roundMoney(totalAmount / periods);
+  }
+
+  const factor = Math.pow(1 + monthlyRate, periods);
+  return roundMoney((totalAmount * monthlyRate * factor) / (factor - 1));
+}
+
+type ActiveDebt = DebtItem & {
+  remainingPrincipal: number;
+  calculatedMonthlyPayment: number;
+};
+
+function calculateDebtStateAtPlanStart(debt: DebtItem, planStartMonth: string): ActiveDebt {
+  const monthlyPayment = calculateMonthlyPayment(
+    debt.totalAmount,
+    debt.remainingPeriods,
+    debt.annualInterestRate
+  );
+  const elapsedPeriods = debt.nextRepaymentMonth
+    ? Math.min(
+        debt.remainingPeriods,
+        getElapsedRepaymentPeriods(debt.nextRepaymentMonth, planStartMonth)
+      )
+    : 0;
+
+  let remainingPrincipal = roundMoney(debt.totalAmount);
+  let remainingPeriods = debt.remainingPeriods;
+
+  for (let period = 0; period < elapsedPeriods; period += 1) {
+    const remainingPrincipalBefore = roundMoney(remainingPrincipal);
+    const monthlyRate = debt.annualInterestRate / 12 / 100;
+    const interest = roundMoney(remainingPrincipalBefore * monthlyRate);
+    let principal = roundMoney(monthlyPayment - interest);
+
+    if (remainingPeriods === 1 || principal > remainingPrincipalBefore) {
+      principal = remainingPrincipalBefore;
+    }
+
+    remainingPrincipal = roundMoney(remainingPrincipalBefore - principal);
+    remainingPeriods -= 1;
+  }
+
+  return {
+    ...debt,
+    remainingPeriods,
+    remainingPrincipal,
+    calculatedMonthlyPayment: monthlyPayment
+  };
+}
+
 export function calculateDebtPlan(
   debts: DebtItem[],
   monthlyIncome = 22000,
   currentCash = 30000,
-  planMonths = 12
+  planMonths = 12,
+  baseDate = new Date()
 ): DebtPlanResponse {
-  const monthlyPlans = [];
+  const monthlyPlans: MonthlyPlan[] = [];
   let planTotalRepayment = 0;
 
-  // 与原先后端计算保持一致，继续从 2026-03 起算。
-  const startDate = new Date(2026, 2, 1);
-  const currentDebts = debts.map((debt) => ({ ...debt }));
+  const startDate = getStartOfMonth(baseDate);
+  const startMonth = getMonthLabel(startDate);
+  const currentDebts: ActiveDebt[] = debts.map((debt) =>
+    calculateDebtStateAtPlanStart(debt, startMonth)
+  );
   let cumulativeCash = currentCash;
 
   for (let monthIndex = 0; monthIndex < planMonths; monthIndex += 1) {
@@ -30,26 +127,49 @@ export function calculateDebtPlan(
     const monthLabel = getMonthLabel(currentDate);
 
     let monthTotal = 0;
-    const monthDebts = [];
+    let monthPrincipal = 0;
+    let monthInterest = 0;
+    const monthDebts: DebtDetail[] = [];
 
     for (const debt of currentDebts) {
       let payment = 0;
+      let principal = 0;
+      let interest = 0;
       const remainingBefore = debt.remainingPeriods;
+      const remainingPrincipalBefore = roundMoney(debt.remainingPrincipal);
       const shouldPayThisMonth = isRepaymentMonthReached(monthLabel, debt.nextRepaymentMonth);
 
       if (shouldPayThisMonth && debt.remainingPeriods > 0) {
-        payment = debt.monthlyPayment;
+        const monthlyRate = debt.annualInterestRate / 12 / 100;
+        interest = roundMoney(remainingPrincipalBefore * monthlyRate);
+        principal = roundMoney(debt.calculatedMonthlyPayment - interest);
+
+        if (debt.remainingPeriods === 1 || principal > remainingPrincipalBefore) {
+          principal = remainingPrincipalBefore;
+          payment = roundMoney(principal + interest);
+        } else {
+          payment = debt.calculatedMonthlyPayment;
+        }
+
+        debt.remainingPrincipal = roundMoney(remainingPrincipalBefore - principal);
         debt.remainingPeriods -= 1;
       }
 
       monthTotal += payment;
+      monthPrincipal += principal;
+      monthInterest += interest;
       monthDebts.push({
         category: debt.category,
         originalTotal: debt.totalAmount,
         payment,
+        principal,
+        interest,
+        remainingPrincipalBefore,
+        remainingPrincipalAfter: roundMoney(debt.remainingPrincipal),
         remainingPeriodsBefore: remainingBefore,
         remainingPeriodsAfter: debt.remainingPeriods,
-        monthlyPayment: debt.monthlyPayment,
+        monthlyPayment: debt.calculatedMonthlyPayment,
+        annualInterestRate: debt.annualInterestRate,
         nextRepaymentMonth: debt.nextRepaymentMonth ?? null
       });
     }
@@ -64,8 +184,10 @@ export function calculateDebtPlan(
       month: monthLabel,
       year: currentDate.getFullYear(),
       monthNum: currentDate.getMonth() + 1,
-      totalRepayment: monthTotal,
-      surplus: monthlyIncome - monthTotal,
+      totalRepayment: roundMoney(monthTotal),
+      totalPrincipal: roundMoney(monthPrincipal),
+      totalInterest: roundMoney(monthInterest),
+      surplus: roundMoney(monthlyIncome - monthTotal),
       cumulativeCash,
       paidOffCount: paidOffDebts,
       activeDebtCount: monthDebts.filter((debt) => debt.payment > 0).length,
@@ -79,17 +201,29 @@ export function calculateDebtPlan(
   endDate.setMonth(startDate.getMonth() + planMonths - 1);
 
   return {
-    startMonth: '2026-03',
+    startMonth,
     endMonth: getMonthLabel(endDate),
     planMonths,
     monthlyPlans,
-    annualTotalRepayment: planTotalRepayment,
+    annualTotalRepayment: roundMoney(planTotalRepayment),
+    totalPrincipal: roundMoney(
+      monthlyPlans.reduce((sum, month) => sum + month.totalPrincipal, 0)
+    ),
+    totalInterest: roundMoney(
+      monthlyPlans.reduce((sum, month) => sum + month.totalInterest, 0)
+    ),
     monthlyIncome,
     currentCash,
     initialDebtSummary: {
       totalDebtAmount: debts.reduce((sum, debt) => sum + debt.totalAmount, 0),
       totalDebts: debts.length,
-      totalMonthlyPayment: debts.reduce((sum, debt) => sum + debt.monthlyPayment, 0)
+      totalMonthlyPayment: roundMoney(
+        debts.reduce(
+          (sum, debt) =>
+            sum + calculateMonthlyPayment(debt.totalAmount, debt.remainingPeriods, debt.annualInterestRate),
+          0
+        )
+      )
     }
   };
 }

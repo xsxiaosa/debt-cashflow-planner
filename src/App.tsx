@@ -48,6 +48,16 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
       )} |`
     );
     lines.push(
+      `| 计划期内总本金 | ¥${planData.totalPrincipal.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
+    lines.push(
+      `| 计划期内总利息 | ¥${planData.totalInterest.toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+      })} |`
+    );
+    lines.push(
       `| 月收入 | ¥${planData.monthlyIncome.toLocaleString('zh-CN', {
         minimumFractionDigits: 2,
       })} |`
@@ -61,8 +71,8 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
 
     lines.push('## 月度还款明细');
     lines.push('');
-    lines.push('| 月份 | 还款总额 | 剩余可支配收入 | 还款笔数 | 本月还清 |');
-    lines.push('|------|----------|----------------|----------|----------|');
+    lines.push('| 月份 | 还款总额 | 本金 | 利息 | 剩余可支配收入 | 还款笔数 | 本月还清 |');
+    lines.push('|------|----------|------|------|----------------|----------|----------|');
     planData.monthlyPlans.forEach((plan) => {
       const surplusStr =
         plan.surplus >= 0
@@ -73,6 +83,10 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
       const paidOffStr = plan.paidOffCount > 0 ? `+${plan.paidOffCount}笔` : '-';
       lines.push(
         `| ${plan.month} | ¥${plan.totalRepayment.toLocaleString('zh-CN', {
+          minimumFractionDigits: 2,
+        })} | ¥${plan.totalPrincipal.toLocaleString('zh-CN', {
+          minimumFractionDigits: 2,
+        })} | ¥${plan.totalInterest.toLocaleString('zh-CN', {
           minimumFractionDigits: 2,
         })} | ${surplusStr} | ${plan.activeDebtCount} 笔 | ${paidOffStr} |`
       );
@@ -96,9 +110,9 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
             return '✓';
           }
           if (currentDebt.remainingPeriodsAfter === 0) {
-            return `${currentDebt.payment.toFixed(0)}(完)`;
+            return `${currentDebt.payment.toFixed(0)} 本${currentDebt.principal.toFixed(0)} 息${currentDebt.interest.toFixed(0)}(完)`;
           }
-          return `${currentDebt.payment.toFixed(0)}(${currentDebt.remainingPeriodsAfter})`;
+          return `${currentDebt.payment.toFixed(0)} 本${currentDebt.principal.toFixed(0)} 息${currentDebt.interest.toFixed(0)}(${currentDebt.remainingPeriodsAfter})`;
         })
         .join(' | ');
 
@@ -112,6 +126,7 @@ function TextVersion({ planData }: TextVersionProps): React.JSX.Element {
     lines.push('');
     lines.push('**说明**: ');
     lines.push('- 括号内数字表示还款后剩余期数');
+    lines.push('- 本/息分别表示当月偿还本金和利息');
     lines.push('- ✓ 表示已还清');
     lines.push('- (完) 表示本月最后一期');
 
@@ -398,6 +413,11 @@ function App(): React.JSX.Element {
               </div>
 
               <div className="summary-card">
+                <h4>计划期内总利息</h4>
+                <p className="amount">{formatCurrency(planData.totalInterest)}</p>
+              </div>
+
+              <div className="summary-card">
                 <h4>月收入</h4>
                 <p className="amount">{formatCurrency(planData.monthlyIncome)}</p>
               </div>
@@ -425,6 +445,8 @@ function App(): React.JSX.Element {
                     <tr>
                       <th>月份</th>
                       <th>还款总额</th>
+                      <th>本金</th>
+                      <th>利息</th>
                       <th>剩余可支配收入</th>
                       <th>还款笔数</th>
                       <th>本月还清</th>
@@ -437,6 +459,8 @@ function App(): React.JSX.Element {
                         <td className="amount-cell">
                           {formatCurrency(plan.totalRepayment)}
                         </td>
+                        <td className="amount-cell">{formatCurrency(plan.totalPrincipal)}</td>
+                        <td className="amount-cell">{formatCurrency(plan.totalInterest)}</td>
                         <td className={plan.surplus > 0 ? 'positive' : 'negative'}>
                           {formatCurrency(plan.surplus)}
                         </td>
@@ -469,6 +493,8 @@ function App(): React.JSX.Element {
                         return {
                           month: plan.month,
                           payment: currentDebt.payment,
+                          principal: currentDebt.principal,
+                          interest: currentDebt.interest,
                           remaining: currentDebt.remainingPeriodsAfter,
                           isPaidOff:
                             currentDebt.remainingPeriodsBefore > 0 &&
@@ -493,6 +519,9 @@ function App(): React.JSX.Element {
                                 <>
                                   <div className="payment-amount">
                                     {monthPlan.payment.toFixed(0)}
+                                  </div>
+                                  <div className="interest-label">
+                                    本{monthPlan.principal.toFixed(0)} / 息{monthPlan.interest.toFixed(0)}
                                   </div>
                                   <div className="remaining-label">
                                     剩{monthPlan.remaining}期

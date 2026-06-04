@@ -267,7 +267,7 @@
   }
 
   .summary-section {
-    grid-template-columns: repeat(5, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 24px;
   }
 
@@ -454,6 +454,13 @@
   font-size: 10px;
   color: #999;
   margin-top: 2px;
+}
+
+.interest-label {
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .payment-cell.paid-off {
@@ -982,6 +989,12 @@
   background: #f8fafc;
   color: var(--text-secondary);
   border: 1px solid #dbe4f0;
+}
+
+.toolbar-btn.danger {
+  background: #fee2e2;
+  color: var(--danger);
+  border: 1px solid rgba(220, 38, 38, 0.18);
 }
 
 .toolbar-btn:disabled,
